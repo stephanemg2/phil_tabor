@@ -1,0 +1,40 @@
+import numpy as np
+
+
+# mem_cntr : last mem pointer position
+
+class ReplayBuffer():
+    def __init__(self, max_size, input_shape, n_action):
+        self.mem_size = max_size
+        self.mem_cntr = 0
+        # we keep all buffers separated
+        # on s'adapte a la taille de l'observation
+        self.state_memory = np.zeros((self.mem_size, *input_shape), dtype=np.float32)
+        self.new_state_memory = np.zeros((self.mem_size, *input_shape), dtype=np.float32)
+        self.action_memory = np.zeros(self.mem_size, dtype=np.int64)
+        self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
+        self.terminal_memory = np.zeros(self.mem_size, dtype=np.uint8)
+
+    def store_transition(self, state, action, reward, state_, done):
+        # location of first unoccupied memory, if > mem_size it goes back to it's relative to 0
+        index = self.mem_cntr % self.mem_size
+        self.state_memory[index] = state
+        self.new_state_memory[index] = state_
+        self.action_memory[index] = action
+        self.reward_memory[index] = reward
+        self.terminal_memory[index] = done
+        self.mem_cntr += 1
+
+    #we sample the memory uniformally
+    def sample_memory(self, batch_size):
+        #position of last stored memory
+        max_mem = min(self.mem_cntr, self.mem_size)
+        #tester avec compteur qui arrive au bout
+        #le replace=False assure qu'on ne reprenne pas le meme sample de mem
+        batch = np.random.choice(max_mem, batch_size, replace=False)
+        states = self.state_memory[batch]
+        actions = self.action_memory[batch]
+        states_ = self.new_state_memory[batch]
+        rewards = self.reward_memory[batch]
+        dones = self.terminal_memory[batch]
+        return states, actions, rewards, states_, dones
