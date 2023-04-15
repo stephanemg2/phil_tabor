@@ -2,24 +2,29 @@ import time
 
 import numpy as np
 from dqn_agent import DQNAgent
+# from ddqn_agent import DDQNAgent
 from utils import make_env, plot_learning_curve
 
 if __name__ == '__main__':
-    render = False
+    render = True
     env_name = 'PongNoFrameskip-v4'
     env = make_env(env_name, render)
     # works for games with negative score
     best_score = -np.inf
 
-    load_checkpoint = False
+    load_checkpoint = True
+    save_checkpoint = False
 
-    n_games = 50
+    n_games = 500
+    # agent = DQNAgent(gamma=0.99, epsilon=1.0, lr=0.0001, input_dims=env.observation_space.shape,
+    #                  n_actions=env.action_space.n, mem_size=50000, eps_min=0.1, batch_size=32, replace=1000,
+    #                  eps_dec=1e-5, chkpt_dir='models/', algo='DQNAgent', env_name=env_name)
     agent = DQNAgent(gamma=0.99, epsilon=1.0, lr=0.0001, input_dims=env.observation_space.shape,
                      n_actions=env.action_space.n, mem_size=50000, eps_min=0.1, batch_size=32, replace=1000,
                      eps_dec=1e-5, chkpt_dir='models/', algo='DQNAgent', env_name=env_name)
-
     if load_checkpoint:
         agent.load_models()
+        agent.epsilon = 0.1
 
     fname = agent.algo + '_' + agent.env_name + '_lr' + str(agent.lr) + '_' + str(n_games) + '_games'
     figure_file = 'plots/' + fname + '.png'
@@ -47,7 +52,8 @@ if __name__ == '__main__':
             f'episode {i} score:{score} average score {avg_score} best score {best_score} epsilon {agent.epsilon} steps {n_steps}')
         # save checkpoint if avg_score > best_score
         if avg_score > best_score:
-            agent.save_models()
+            if save_checkpoint:
+                agent.save_models()
             best_score = avg_score
         eps_history.append(agent.epsilon)
     env.close()
